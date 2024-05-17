@@ -1,6 +1,9 @@
 # https://docs.docker.com/buildx/working-with-buildx/
 # TARGETPLATFORM if not empty OR linux/amd64 by default
+FROM --platform=${TARGETPLATFORM:-linux/amd64} golang:1.22.3 as golang
 FROM --platform=${TARGETPLATFORM:-linux/amd64} ghcr.io/roadrunner-server/velox:latest as velox
+
+COPY --from=golang /usr/local/go/ /usr/local/go/
 
 # app version and build date must be passed during image building (version without any prefix).
 # e.g.: `docker build --build-arg "APP_VERSION=1.2.3" --build-arg "BUILD_TIME=$(date +%FT%T%z)" .`
