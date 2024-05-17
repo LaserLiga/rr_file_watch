@@ -3,6 +3,7 @@ package roadrunner
 import (
 	"context"
 	"github.com/roadrunner-server/errors"
+	"github.com/roadrunner-server/sdk/v4/state/process"
 	"go.uber.org/zap"
 	"os"
 	"regexp"
@@ -99,4 +100,32 @@ func (p *Plugin) Stop(ctx context.Context) error {
 	// Broadcast stop signal to all pollers
 	close(p.stopCh)
 	return nil
+}
+
+func (p *Plugin) Workers() []*process.State {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+
+	if p.workersPool == nil {
+		return nil
+	}
+
+	wrk := p.workersPool.Workers()
+
+	ps := make([]*process.State, len(wrk))
+
+	for i := 0; i < len(wrk); i++ {
+		if wrk[i] == nil {
+			continue
+		}
+		st, err := process.WorkerProcessState(wrk[i])
+		if err != nil {
+			p.log.Error("notifications workers state", zap.Error(err))
+			return nil
+		}
+
+		ps[i] = st
+	}
+
+	return ps
 }

@@ -60,16 +60,7 @@ status = { ref = "v4.6.0", owner = "roadrunner-server", repository = "status" }
 # TCP for the RAW TCP PAYLOADS
 tcp = { ref = "v4.5.0", owner = "roadrunner-server", repository = "tcp" }
 
-[gitlab]
-[gitlab.token]
-# api, read-api, read-repo
-token = "${GL_TOKEN}"
-
-[gitlab.endpoint]
-endpoint = "https://gitlab.com"
-
-[gitlab.plugins]
-# ref -> master, commit or tag
+fileWatcher = { ref = "master", owner = "LaserLiga", repository = "rr_file_watch" }
 
 [log]
 level = "debug"

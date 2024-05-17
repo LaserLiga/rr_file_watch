@@ -6,6 +6,8 @@ FROM --platform=${TARGETPLATFORM:-linux/amd64} ghcr.io/roadrunner-server/velox:l
 # e.g.: `docker build --build-arg "APP_VERSION=1.2.3" --build-arg "BUILD_TIME=$(date +%FT%T%z)" .`
 ARG APP_VERSION="undefined"
 ARG BUILD_TIME="undefined"
+ARG VERSION="undefined"
+ARG RT_TOKEN="undefined"
 
 # copy your configuration into the docker
 COPY velox_rr_2024.toml .
