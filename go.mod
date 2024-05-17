@@ -1,4 +1,4 @@
-module file_watch
+module github.com/LaserLiga/rr_file_watch
 
 go 1.22.2
 

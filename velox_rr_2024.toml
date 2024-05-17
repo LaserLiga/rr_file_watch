@@ -60,7 +60,7 @@ status = { ref = "v4.6.0", owner = "roadrunner-server", repository = "status" }
 # TCP for the RAW TCP PAYLOADS
 tcp = { ref = "v4.5.0", owner = "roadrunner-server", repository = "tcp" }
 
-fileWatcher = { ref = "master", owner = "LaserLiga", repository = "rr_file_watch" }
+fileWatch = { ref = "master", owner = "LaserLiga", repository = "rr_file_watch" }
 
 [log]
 level = "debug"
