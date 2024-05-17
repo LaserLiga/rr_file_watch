@@ -7,7 +7,7 @@ require (
 	github.com/radovskyb/watcher v1.0.7
 	github.com/roadrunner-server/errors v1.4.0
 	github.com/roadrunner-server/goridge/v3 v3.8.2
-	github.com/roadrunner-server/sdk/v4 v4.7.2
+	github.com/roadrunner-server/sdk/v4 v4.6.0
 	go.uber.org/zap v1.27.0
 )
 
