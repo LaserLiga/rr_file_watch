@@ -2,12 +2,9 @@ module github.com/LaserLiga/rr_file_watch
 
 go 1.22.2
 
-toolchain go1.22.3
-
 require (
 	github.com/prometheus/client_golang v1.19.0
 	github.com/radovskyb/watcher v1.0.7
-	github.com/roadrunner-server/endure/v2 v2.4.4
 	github.com/roadrunner-server/errors v1.4.0
 	github.com/roadrunner-server/goridge/v3 v3.8.2
 	github.com/roadrunner-server/sdk/v4 v4.7.2
