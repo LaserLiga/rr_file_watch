@@ -2,6 +2,7 @@ package roadrunner
 
 import (
 	"context"
+	"encoding/json"
 	"github.com/radovskyb/watcher"
 	"github.com/roadrunner-server/goridge/v3/pkg/frame"
 	"github.com/roadrunner-server/sdk/v4/payload"
@@ -31,9 +32,23 @@ func (p *Plugin) listener() {
 
 				p.log.Debug("Received a file event", zap.String("event", event.String()))
 
+				eventDetails := map[string]interface{}{
+					"directory": p.cfg.dir,
+					"file":      event.Name(),
+					"op":        event.Op.String(),
+					"path":      event.Path,
+					"eventTime": event.ModTime().String(),
+				}
+
+				eventDetailsBytes, err := json.Marshal(eventDetails)
+				if err != nil {
+					p.log.Error("Failed to marshal event details", zap.Error(err))
+					continue
+				}
+
 				// Create payload
 				pld := payload.Payload{
-					Body:  []byte(event.Name()),
+					Body:  eventDetailsBytes,
 					Codec: frame.CodecRaw,
 				}
 
