@@ -2,6 +2,7 @@ package roadrunner
 
 import (
 	"context"
+	"encoding/json"
 	"github.com/roadrunner-server/errors"
 	"github.com/roadrunner-server/sdk/v4/state/process"
 	"go.uber.org/zap"
@@ -42,29 +43,6 @@ func (p *Plugin) Init(cfg Configurer, log Logger, server Server) error {
 
 	p.cfg.InitDefaults()
 
-	// Validate directory config
-	if p.cfg.dir == "" {
-		return errors.E(op, errors.Str("dir is required"))
-	}
-	info, err := os.Stat(p.cfg.dir)
-	if os.IsNotExist(err) {
-		return errors.E(op, errors.Str("dir does not exist"))
-	} else if err != nil {
-		return errors.E(op, err)
-	}
-	// Check if the path is a directory
-	if !info.IsDir() {
-		return errors.E(op, errors.Str("dir is not a directory"))
-	}
-
-	// Validate regexp
-	if p.cfg.regexp != "" {
-		_, err := regexp.Compile(p.cfg.regexp)
-		if err != nil {
-			return errors.E(op, err)
-		}
-	}
-
 	p.server = server
 
 	p.log = new(zap.Logger)
@@ -78,6 +56,50 @@ func (p *Plugin) Init(cfg Configurer, log Logger, server Server) error {
 func (p *Plugin) Serve() chan error {
 	errCh := make(chan error, 1)
 	const op = errors.Op("file_watch_plugin_serve")
+
+	// Validate directory config
+	jsonCfg, jsonErr := json.Marshal(p.cfg)
+	if p.cfg.dir == "" {
+		if jsonErr == nil {
+			errCh <- errors.E(op, errors.Str("dir is required "+string(jsonCfg)))
+		} else {
+			errCh <- errors.E(op, jsonErr)
+			errCh <- errors.E(op, errors.Str("dir is required"))
+		}
+		return errCh
+	}
+	info, fileErr := os.Stat(p.cfg.dir)
+	if os.IsNotExist(fileErr) {
+		if jsonErr == nil {
+			errCh <- errors.E(op, errors.Str("dir does not exist "+string(jsonCfg)))
+		} else {
+			errCh <- errors.E(op, jsonErr)
+			errCh <- errors.E(op, errors.Str("dir does not exist"))
+		}
+		return errCh
+	} else if fileErr != nil {
+		errCh <- errors.E(op, fileErr)
+		return errCh
+	}
+	// Check if the path is a directory
+	if !info.IsDir() {
+		if jsonErr == nil {
+			errCh <- errors.E(op, errors.Str("dir is not a directory "+string(jsonCfg)))
+		} else {
+			errCh <- errors.E(op, jsonErr)
+			errCh <- errors.E(op, errors.Str("dir is not a directory"))
+		}
+		return errCh
+	}
+
+	// Validate regexp
+	if p.cfg.regexp != "" {
+		_, err := regexp.Compile(p.cfg.regexp)
+		if err != nil {
+			errCh <- errors.E(op, err)
+			return errCh
+		}
+	}
 
 	p.mu.Lock()
 
