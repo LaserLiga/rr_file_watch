@@ -9,6 +9,7 @@ import (
 	"os"
 	"regexp"
 	"sync"
+	"time"
 )
 
 const (
@@ -116,6 +117,24 @@ func (p *Plugin) Serve() chan error {
 
 	p.mu.Unlock()
 	return errCh
+}
+
+func (p *Plugin) Reset() error {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+
+	if p.workersPool == nil {
+		return nil
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	defer cancel()
+	err := p.workersPool.Reset(ctx)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (p *Plugin) Stop(ctx context.Context) error {

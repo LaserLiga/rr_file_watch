@@ -47,17 +47,18 @@ func (p *Plugin) listener() {
 					continue
 				}
 
-				// Create payload
-				pld := payload.Payload{
-					Body:  eventDetailsBytes,
-					Codec: frame.CodecRaw,
-				}
-
 				p.metrics.CountEvents()
 
 				// protect from the pool reset
 				p.mu.RLock()
-				re, err := p.workersPool.Exec(context.Background(), &pld, nil)
+				re, err := p.workersPool.Exec(
+					context.Background(),
+					&payload.Payload{
+						Body:  eventDetailsBytes,
+						Codec: frame.CodecRaw,
+					},
+					p.stopCh,
+				)
 				p.mu.RUnlock()
 
 				if err != nil {
@@ -114,6 +115,7 @@ func (p *Plugin) listener() {
 			case err := <-w.Error:
 				p.log.Error(err.Error())
 			case <-w.Closed:
+				p.log.Debug("File watch closing")
 				return
 			}
 		}
