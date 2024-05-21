@@ -5,8 +5,8 @@ import poolImpl "github.com/roadrunner-server/sdk/v4/pool"
 type Config struct {
 	// Pool configures roadrunner workers pool.
 	Pool   *poolImpl.Config `mapstructure:"pool"`
-	dir    string           `mapstructure:"dir"`
-	regexp string           `mapstructure:"regexp"`
+	Dir    string           `mapstructure:"dir"`
+	Regexp string           `mapstructure:"regexp"`
 }
 
 func (cfg *Config) InitDefaults() {
@@ -15,4 +15,8 @@ func (cfg *Config) InitDefaults() {
 	}
 
 	cfg.Pool.InitDefaults()
+
+	if cfg.Dir == "" {
+		cfg.Dir = "./lmx/results"
+	}
 }

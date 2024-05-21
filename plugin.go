@@ -59,22 +59,22 @@ func (p *Plugin) Serve() chan error {
 
 	// Validate directory config
 	jsonCfg, jsonErr := json.Marshal(p.cfg)
-	if p.cfg.dir == "" {
+	if p.cfg.Dir == "" {
 		if jsonErr == nil {
-			errCh <- errors.E(op, errors.Str("dir is required "+string(jsonCfg)))
+			errCh <- errors.E(op, errors.Str("Dir is required "+string(jsonCfg)))
 		} else {
 			errCh <- errors.E(op, jsonErr)
-			errCh <- errors.E(op, errors.Str("dir is required"))
+			errCh <- errors.E(op, errors.Str("Dir is required"))
 		}
 		return errCh
 	}
-	info, fileErr := os.Stat(p.cfg.dir)
+	info, fileErr := os.Stat(p.cfg.Dir)
 	if os.IsNotExist(fileErr) {
 		if jsonErr == nil {
-			errCh <- errors.E(op, errors.Str("dir does not exist "+string(jsonCfg)))
+			errCh <- errors.E(op, errors.Str("Dir does not exist "+string(jsonCfg)))
 		} else {
 			errCh <- errors.E(op, jsonErr)
-			errCh <- errors.E(op, errors.Str("dir does not exist"))
+			errCh <- errors.E(op, errors.Str("Dir does not exist"))
 		}
 		return errCh
 	} else if fileErr != nil {
@@ -84,17 +84,17 @@ func (p *Plugin) Serve() chan error {
 	// Check if the path is a directory
 	if !info.IsDir() {
 		if jsonErr == nil {
-			errCh <- errors.E(op, errors.Str("dir is not a directory "+string(jsonCfg)))
+			errCh <- errors.E(op, errors.Str("Dir is not a directory "+string(jsonCfg)))
 		} else {
 			errCh <- errors.E(op, jsonErr)
-			errCh <- errors.E(op, errors.Str("dir is not a directory"))
+			errCh <- errors.E(op, errors.Str("Dir is not a directory"))
 		}
 		return errCh
 	}
 
-	// Validate regexp
-	if p.cfg.regexp != "" {
-		_, err := regexp.Compile(p.cfg.regexp)
+	// Validate Regexp
+	if p.cfg.Regexp != "" {
+		_, err := regexp.Compile(p.cfg.Regexp)
 		if err != nil {
 			errCh <- errors.E(op, err)
 			return errCh

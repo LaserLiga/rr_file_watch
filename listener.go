@@ -16,8 +16,8 @@ func (p *Plugin) listener() {
 	w.SetMaxEvents(1)
 	w.FilterOps(watcher.Rename, watcher.Move, watcher.Create, watcher.Write)
 
-	if p.cfg.regexp != "" {
-		r := regexp.MustCompile(p.cfg.regexp)
+	if p.cfg.Regexp != "" {
+		r := regexp.MustCompile(p.cfg.Regexp)
 		w.AddFilterHook(watcher.RegexFilterHook(r, false))
 	}
 
@@ -33,7 +33,7 @@ func (p *Plugin) listener() {
 				p.log.Debug("Received a file event", zap.String("event", event.String()))
 
 				eventDetails := map[string]interface{}{
-					"directory": p.cfg.dir,
+					"directory": p.cfg.Dir,
 					"file":      event.Name(),
 					"op":        event.Op.String(),
 					"path":      event.Path,
@@ -118,7 +118,7 @@ func (p *Plugin) listener() {
 		}
 	}()
 
-	if err := w.Add(p.cfg.dir); err != nil {
+	if err := w.Add(p.cfg.Dir); err != nil {
 		p.log.Error(err.Error())
 	}
 }
