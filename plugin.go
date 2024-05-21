@@ -9,7 +9,6 @@ import (
 	"os"
 	"regexp"
 	"sync"
-	"time"
 )
 
 const (
@@ -17,6 +16,9 @@ const (
 	RrModeFileWatch string = "file_watch"
 
 	PluginName = "file_watch"
+
+	// v2.7 and newer config key
+	cfgKey string = "config"
 )
 
 type Plugin struct {
@@ -45,6 +47,8 @@ func (p *Plugin) Init(cfg Configurer, log Logger, server Server) error {
 	p.cfg.InitDefaults()
 
 	p.server = server
+
+	p.stopCh = make(chan struct{}, 1)
 
 	p.log = new(zap.Logger)
 	p.log = log.NamedLogger(PluginName)
@@ -119,20 +123,21 @@ func (p *Plugin) Serve() chan error {
 	return errCh
 }
 
+func (p *Plugin) Name() string {
+	return PluginName
+}
+
 func (p *Plugin) Reset() error {
-	p.mu.RLock()
-	defer p.mu.RUnlock()
+	p.mu.Lock()
+	defer p.mu.Unlock()
 
-	if p.workersPool == nil {
-		return nil
-	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
-	defer cancel()
-	err := p.workersPool.Reset(ctx)
+	const op = errors.Op("file_watch_plugin_reset")
+	p.log.Info("reset signal was received")
+	err := p.workersPool.Reset(context.Background())
 	if err != nil {
-		return err
+		return errors.E(op, err)
 	}
+	p.log.Info("plugin was successfully reset")
 
 	return nil
 }

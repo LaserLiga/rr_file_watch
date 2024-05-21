@@ -5,6 +5,7 @@ go 1.22.2
 require (
 	github.com/prometheus/client_golang v1.19.0
 	github.com/radovskyb/watcher v1.0.7
+	github.com/roadrunner-server/api/v4 v4.12.0
 	github.com/roadrunner-server/errors v1.4.0
 	github.com/roadrunner-server/goridge/v3 v3.8.2
 	github.com/roadrunner-server/sdk/v4 v4.6.0
