@@ -13,7 +13,6 @@ import (
 
 func (p *Plugin) listener() {
 	w := watcher.New()
-	w.SetMaxEvents(1)
 	w.FilterOps(watcher.Rename, watcher.Move, watcher.Create, watcher.Write)
 
 	if p.cfg.Regexp != "" {
@@ -21,11 +20,13 @@ func (p *Plugin) listener() {
 		w.AddFilterHook(watcher.RegexFilterHook(r, false))
 	}
 
+	p.log.Debug("Starting watching on " + p.cfg.Dir + "( " + p.cfg.Regexp + " )")
+
 	go func() {
 		for {
 			select {
 			case <-p.stopCh:
-				p.log.Debug("------> job poller was stopped <------")
+				p.log.Debug("------> file watch poller was stopped <------")
 				return
 			case event := <-w.Event:
 				start := time.Now().UTC()
@@ -119,6 +120,10 @@ func (p *Plugin) listener() {
 	}()
 
 	if err := w.Add(p.cfg.Dir); err != nil {
+		p.log.Error(err.Error())
+	}
+
+	if err := w.Start(time.Millisecond * 100); err != nil {
 		p.log.Error(err.Error())
 	}
 }
