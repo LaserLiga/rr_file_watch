@@ -1,6 +1,6 @@
 package roadrunner
 
-import poolImpl "github.com/roadrunner-server/sdk/v4/pool"
+import poolImpl "github.com/roadrunner-server/pool/pool"
 
 type Config struct {
 	// Pool configures roadrunner workers pool.

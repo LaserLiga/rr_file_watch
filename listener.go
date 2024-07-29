@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"github.com/radovskyb/watcher"
 	"github.com/roadrunner-server/goridge/v3/pkg/frame"
-	"github.com/roadrunner-server/sdk/v4/payload"
+	"github.com/roadrunner-server/pool/payload"
 	"go.uber.org/zap"
 	"regexp"
 	"time"

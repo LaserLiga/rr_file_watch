@@ -1,6 +1,6 @@
 # https://docs.docker.com/buildx/working-with-buildx/
 # TARGETPLATFORM if not empty OR linux/amd64 by default
-FROM --platform=${TARGETPLATFORM:-linux/amd64} golang:1.22.3 as golang
+FROM --platform=${TARGETPLATFORM:-linux/amd64} golang:1.22.4 as golang
 FROM --platform=${TARGETPLATFORM:-linux/amd64} ghcr.io/roadrunner-server/velox:latest as velox
 
 COPY --from=golang /usr/local/go/ /usr/local/go/

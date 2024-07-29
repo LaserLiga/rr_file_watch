@@ -4,7 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"github.com/roadrunner-server/errors"
-	"github.com/roadrunner-server/sdk/v4/state/process"
+	"github.com/roadrunner-server/pool/pool/static_pool"
+	"github.com/roadrunner-server/pool/state/process"
 	"go.uber.org/zap"
 	"os"
 	"regexp"
@@ -24,7 +25,7 @@ const (
 type Plugin struct {
 	mu          sync.RWMutex
 	cfg         *Config
-	workersPool Pool
+	workersPool *static_pool.Pool
 	server      Server
 	log         *zap.Logger
 	metrics     *statsExporter

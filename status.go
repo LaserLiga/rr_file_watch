@@ -2,7 +2,7 @@ package roadrunner
 
 import (
 	"github.com/roadrunner-server/api/v4/plugins/v1/status"
-	"github.com/roadrunner-server/sdk/v4/fsm"
+	"github.com/roadrunner-server/pool/fsm"
 	"net/http"
 )
 
