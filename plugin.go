@@ -108,11 +108,11 @@ func (p *Plugin) Serve() chan error {
 	}
 
 	p.mu.Lock()
+	defer p.mu.Unlock()
 
 	var err error
 	p.workersPool, err = p.server.NewPool(context.Background(), p.cfg.Pool, map[string]string{RrMode: RrModeFileWatch}, nil)
 	if err != nil {
-		p.mu.Unlock()
 		errCh <- errors.E(op, err)
 		return errCh
 	}
@@ -120,7 +120,6 @@ func (p *Plugin) Serve() chan error {
 	// start listening
 	p.listener()
 
-	p.mu.Unlock()
 	return errCh
 }
 
@@ -159,19 +158,13 @@ func (p *Plugin) Workers() []*process.State {
 
 	wrk := p.workersPool.Workers()
 
-	ps := make([]*process.State, len(wrk))
-
-	for i := 0; i < len(wrk); i++ {
-		if wrk[i] == nil {
-			continue
-		}
-		st, err := process.WorkerProcessState(wrk[i])
+	ps := make([]*process.State, 0, len(wrk))
+	for i := range wrk {
+		state, err := process.WorkerProcessState(wrk[i])
 		if err != nil {
-			p.log.Error("notifications workers state", zap.Error(err))
 			return nil
 		}
-
-		ps[i] = st
+		ps = append(ps, state)
 	}
 
 	return ps
