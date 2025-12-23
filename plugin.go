@@ -17,9 +17,6 @@ const (
 	RrModeFileWatch string = "file_watch"
 
 	PluginName = "file_watch"
-
-	// v2.7 and newer config key
-	cfgKey string = "config"
 )
 
 type Plugin struct {
