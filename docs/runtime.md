@@ -6,20 +6,21 @@ During `Init`, the plugin:
 
 1. Checks whether the RoadRunner configuration contains the `file_watch` section.
 2. Unmarshals that section into `Config`.
-3. Applies defaults, including `dir: ./lmx/results` when no directory is provided.
+3. Applies defaults, including `dir: ./lmx/results` when neither `dir` nor `dirs` is provided.
 4. Stores the RoadRunner server and logger dependencies.
 5. Creates the Prometheus stats exporter.
 
 During `Serve`, the plugin:
 
-1. Validates the configured directory.
+1. Validates all configured watch directories.
 2. Validates the configured regular expression, when present.
 3. Creates a RoadRunner static worker pool.
 4. Starts the filesystem listener goroutine.
 
 ## Filesystem Watching
 
-The listener uses `github.com/radovskyb/watcher` and polls every 100 milliseconds.
+The listener uses `github.com/radovskyb/watcher` and polls every 100 milliseconds. Every configured directory is added
+to the same watcher instance.
 
 The plugin filters for these filesystem operations:
 

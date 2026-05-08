@@ -15,6 +15,45 @@ func TestConfigDefaultDebounceIsValid(t *testing.T) {
 	}
 }
 
+func TestConfigDefaultsSingleWatchDir(t *testing.T) {
+	cfg := &Config{}
+	cfg.InitDefaults()
+
+	dirs := cfg.WatchDirs()
+	if len(dirs) != 1 {
+		t.Fatalf("expected one default watch dir, got %d", len(dirs))
+	}
+	if dirs[0] != "./lmx/results" {
+		t.Fatalf("unexpected default watch dir %q", dirs[0])
+	}
+}
+
+func TestConfigUsesConfiguredDirs(t *testing.T) {
+	cfg := &Config{Dirs: []string{"./lmx/results", "./lmx6/results"}}
+	cfg.InitDefaults()
+
+	dirs := cfg.WatchDirs()
+	if len(dirs) != 2 {
+		t.Fatalf("expected two watch dirs, got %d", len(dirs))
+	}
+	if dirs[0] != "./lmx/results" || dirs[1] != "./lmx6/results" {
+		t.Fatalf("unexpected watch dirs %#v", dirs)
+	}
+}
+
+func TestConfigKeepsLegacyDirWithDirs(t *testing.T) {
+	cfg := &Config{Dir: "./lmx/results", Dirs: []string{"./lmx/results", "./lmx6/results"}}
+	cfg.InitDefaults()
+
+	dirs := cfg.WatchDirs()
+	if len(dirs) != 2 {
+		t.Fatalf("expected duplicate dirs to be removed, got %#v", dirs)
+	}
+	if dirs[0] != "./lmx/results" || dirs[1] != "./lmx6/results" {
+		t.Fatalf("unexpected watch dirs %#v", dirs)
+	}
+}
+
 func TestConfigRejectsInvalidDebounce(t *testing.T) {
 	cfg := &Config{Debounce: "soon"}
 	cfg.InitDefaults()

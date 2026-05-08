@@ -1,13 +1,13 @@
 # rr_file_watch
 
-`rr_file_watch` is a RoadRunner plugin that watches a configured directory for file changes and sends matching
+`rr_file_watch` is a RoadRunner plugin that watches configured directories for file changes and sends matching
 filesystem events to a RoadRunner worker pool.
 
 The plugin is registered under the RoadRunner configuration key `file_watch`. When enabled, it:
 
-- validates the configured watch directory and optional regular expression;
+- validates the configured watch directories and optional regular expression;
 - starts a static RoadRunner worker pool with `RR_MODE=file_watch` in the worker environment;
-- watches the configured directory for file create, write, rename, and move events;
+- watches the configured directories for file create, write, rename, and move events;
 - serializes each event as raw JSON;
 - submits the JSON payload to the worker pool with a 10 second execution deadline;
 - exports Prometheus metrics for events, worker jobs, worker states, and worker memory;

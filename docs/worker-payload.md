@@ -26,7 +26,7 @@ Workers should treat the request body as raw JSON bytes.
 
 | Field       | Type   | Description                                                                 |
 |-------------|--------|-----------------------------------------------------------------------------|
-| `directory` | string | Configured watch directory.                                                 |
+| `directory` | string | Configured watch directory that matched the event path.                     |
 | `file`      | string | Event file name from the watcher.                                           |
 | `op`        | string | Watcher operation name, such as `CREATE`, `WRITE`, `RENAME`, or `MOVE`.     |
 | `path`      | string | Event path from the watcher.                                                |

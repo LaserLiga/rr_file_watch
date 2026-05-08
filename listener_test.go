@@ -3,6 +3,7 @@ package roadrunner
 import (
 	"context"
 	"errors"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -131,4 +132,23 @@ func TestScheduleDebouncedEventCoalescesByPath(t *testing.T) {
 	}
 
 	stopPendingEvents(pending)
+}
+
+func TestWatchedDirectoryForEventReturnsMatchingDir(t *testing.T) {
+	lmxDir := filepath.Join(t.TempDir(), "lmx", "results")
+	lmx6Dir := filepath.Join(t.TempDir(), "lmx6", "results")
+	plugin := &Plugin{cfg: &Config{Dirs: []string{lmxDir, lmx6Dir}}}
+
+	eventPath := filepath.Join(lmx6Dir, "0001.game")
+	if got := plugin.watchedDirectoryForEvent(eventPath); got != lmx6Dir {
+		t.Fatalf("expected matching lmx6 dir %q, got %q", lmx6Dir, got)
+	}
+}
+
+func TestWatchedDirectoryForEventFallsBackToLegacyDir(t *testing.T) {
+	plugin := &Plugin{cfg: &Config{Dir: "./lmx/results"}}
+
+	if got := plugin.watchedDirectoryForEvent("/tmp/unknown.game"); got != "./lmx/results" {
+		t.Fatalf("expected legacy dir fallback, got %q", got)
+	}
 }

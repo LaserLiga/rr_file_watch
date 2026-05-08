@@ -4,7 +4,9 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"path/filepath"
 	"regexp"
+	"strings"
 	"time"
 
 	"github.com/radovskyb/watcher"
@@ -29,8 +31,11 @@ func (p *Plugin) listener() error {
 		w.AddFilterHook(watcher.RegexFilterHook(r, false))
 	}
 
-	if err := w.Add(p.cfg.Dir); err != nil {
-		return err
+	dirs := p.cfg.WatchDirs()
+	for _, dir := range dirs {
+		if err := w.Add(dir); err != nil {
+			return err
+		}
 	}
 
 	debounce, err := p.cfg.DebounceDuration()
@@ -41,7 +46,7 @@ func (p *Plugin) listener() error {
 	p.watcher = w
 	stopCh := p.stopCh
 
-	p.log.Debug("Starting watching on "+p.cfg.Dir+"( "+p.cfg.Regexp+" )", zap.Duration("debounce", debounce))
+	p.log.Debug("Starting file watch", zap.Strings("dirs", dirs), zap.String("regexp", p.cfg.Regexp), zap.Duration("debounce", debounce))
 
 	go p.watchEvents(w, debounce, stopCh)
 
@@ -140,7 +145,7 @@ func (p *Plugin) dispatchEvent(event watcher.Event) {
 	start := time.Now().UTC()
 
 	eventDetails := map[string]interface{}{
-		"directory": p.cfg.Dir,
+		"directory": p.watchedDirectoryForEvent(event.Path),
 		"file":      event.Name(),
 		"op":        event.Op.String(),
 		"path":      event.Path,
@@ -171,6 +176,36 @@ func (p *Plugin) dispatchEvent(event watcher.Event) {
 	p.metrics.CountJobOk()
 
 	p.log.Debug("notification was processed successfully", zap.Time("start", start), zap.Int64("elapsed", time.Since(start).Milliseconds()))
+}
+
+func (p *Plugin) watchedDirectoryForEvent(path string) string {
+	eventPath, err := filepath.Abs(path)
+	if err != nil {
+		eventPath = filepath.Clean(path)
+	}
+
+	for _, dir := range p.cfg.WatchDirs() {
+		watchDir, err := filepath.Abs(dir)
+		if err != nil {
+			watchDir = filepath.Clean(dir)
+		}
+		rel, err := filepath.Rel(watchDir, eventPath)
+		if err == nil && rel != "." && !strings.HasPrefix(rel, ".."+string(filepath.Separator)) && rel != ".." {
+			return dir
+		}
+		if err == nil && rel == "." {
+			return dir
+		}
+	}
+
+	if p.cfg.Dir != "" {
+		return p.cfg.Dir
+	}
+	dirs := p.cfg.WatchDirs()
+	if len(dirs) > 0 {
+		return dirs[0]
+	}
+	return ""
 }
 
 func (p *Plugin) executePayload(pld *payload.Payload) error {
