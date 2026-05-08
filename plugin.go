@@ -3,13 +3,15 @@ package roadrunner
 import (
 	"context"
 	"encoding/json"
+	"os"
+	"regexp"
+	"sync"
+
+	"github.com/radovskyb/watcher"
 	"github.com/roadrunner-server/errors"
 	"github.com/roadrunner-server/pool/pool/static_pool"
 	"github.com/roadrunner-server/pool/state/process"
 	"go.uber.org/zap"
-	"os"
-	"regexp"
-	"sync"
 )
 
 const (
@@ -23,12 +25,14 @@ type Plugin struct {
 	mu          sync.RWMutex
 	cfg         *Config
 	workersPool *static_pool.Pool
+	watcher     *watcher.Watcher
 	server      Server
 	log         *zap.Logger
 	metrics     *statsExporter
 
 	// signal channel to stop the pollers
-	stopCh chan struct{}
+	stopCh   chan struct{}
+	stopOnce sync.Once
 }
 
 func (p *Plugin) Init(cfg Configurer, log Logger, server Server) error {
@@ -43,10 +47,14 @@ func (p *Plugin) Init(cfg Configurer, log Logger, server Server) error {
 	}
 
 	p.cfg.InitDefaults()
+	if err = p.cfg.Validate(); err != nil {
+		return errors.E(op, err)
+	}
 
 	p.server = server
 
 	p.stopCh = make(chan struct{}, 1)
+	p.stopOnce = sync.Once{}
 
 	p.log = new(zap.Logger)
 	p.log = log.NamedLogger(PluginName)
@@ -107,6 +115,9 @@ func (p *Plugin) Serve() chan error {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
+	p.stopCh = make(chan struct{})
+	p.stopOnce = sync.Once{}
+
 	var err error
 	p.workersPool, err = p.server.NewPool(context.Background(), p.cfg.Pool, map[string]string{RrMode: RrModeFileWatch}, nil)
 	if err != nil {
@@ -115,7 +126,12 @@ func (p *Plugin) Serve() chan error {
 	}
 
 	// start listening
-	p.listener()
+	if err = p.listener(); err != nil {
+		p.workersPool.Destroy(context.Background())
+		p.workersPool = nil
+		errCh <- errors.E(op, err)
+		return errCh
+	}
 
 	return errCh
 }
@@ -130,6 +146,9 @@ func (p *Plugin) Reset() error {
 
 	const op = errors.Op("file_watch_plugin_reset")
 	p.log.Info("reset signal was received")
+	if p.workersPool == nil {
+		return errors.E(op, errors.Str("worker pool is not initialized"))
+	}
 	err := p.workersPool.Reset(context.Background())
 	if err != nil {
 		return errors.E(op, err)
@@ -140,8 +159,22 @@ func (p *Plugin) Reset() error {
 }
 
 func (p *Plugin) Stop(ctx context.Context) error {
-	// Broadcast stop signal to all pollers
-	close(p.stopCh)
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
+	if p.watcher != nil {
+		p.watcher.Close()
+		p.watcher = nil
+	}
+
+	if p.stopCh != nil {
+		stopCh := p.stopCh
+		p.stopOnce.Do(func() {
+			// Broadcast stop signal to all pollers.
+			close(stopCh)
+		})
+	}
+
 	return nil
 }
 
