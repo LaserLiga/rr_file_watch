@@ -123,10 +123,7 @@ func scheduleDebouncedEvent(pending map[string]*pendingFileEvent, ready chan<- d
 	current.seq++
 	seq := current.seq
 	current.timer = time.AfterFunc(debounce, func() {
-		select {
-		case ready <- debouncedFileEvent{path: path, seq: seq}:
-		default:
-		}
+		ready <- debouncedFileEvent{path: path, seq: seq}
 	})
 }
 

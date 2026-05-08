@@ -53,7 +53,6 @@ func (p *Plugin) Init(cfg Configurer, log Logger, server Server) error {
 
 	p.server = server
 
-	p.stopCh = make(chan struct{}, 1)
 	p.stopOnce = sync.Once{}
 
 	p.log = new(zap.Logger)
