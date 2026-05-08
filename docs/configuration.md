@@ -16,10 +16,12 @@ The plugin refuses to start when:
 
 - the `file_watch` configuration section is missing;
 - no watch directories are configured after defaults are applied;
-- any configured watch directory does not exist;
-- any configured watch directory points to a non-directory path;
+- no configured watch directory exists or points to a directory.
 - `regexp` is set but cannot be compiled.
 - `debounce` cannot be parsed as a non-negative Go duration.
+
+Missing paths and paths that are not directories are logged as warnings and skipped. This lets one configuration serve
+deployments where only some supported systems are present.
 
 ## Example
 

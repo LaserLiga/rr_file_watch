@@ -12,7 +12,7 @@ During `Init`, the plugin:
 
 During `Serve`, the plugin:
 
-1. Validates all configured watch directories.
+1. Validates all configured watch directories, skipping missing paths with warnings.
 2. Validates the configured regular expression, when present.
 3. Creates a RoadRunner static worker pool.
 4. Starts the filesystem listener goroutine.
@@ -20,7 +20,8 @@ During `Serve`, the plugin:
 ## Filesystem Watching
 
 The listener uses `github.com/radovskyb/watcher` and polls every 100 milliseconds. Every configured directory is added
-to the same watcher instance.
+to the same watcher instance. Missing directories and non-directory paths are skipped; startup fails only when no
+configured directory is usable.
 
 The plugin filters for these filesystem operations:
 

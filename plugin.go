@@ -68,32 +68,13 @@ func (p *Plugin) Serve() chan error {
 	const op = errors.Op("file_watch_plugin_serve")
 
 	// Validate directory config
-	jsonCfg, jsonErr := json.Marshal(p.cfg)
-	for _, dir := range p.cfg.WatchDirs() {
-		info, fileErr := os.Stat(dir)
-		if os.IsNotExist(fileErr) {
-			if jsonErr == nil {
-				errCh <- errors.E(op, errors.Str("Dir does not exist "+dir+" "+string(jsonCfg)))
-			} else {
-				errCh <- errors.E(op, jsonErr)
-				errCh <- errors.E(op, errors.Str("Dir does not exist "+dir))
-			}
-			return errCh
-		} else if fileErr != nil {
-			errCh <- errors.E(op, fileErr)
-			return errCh
-		}
-		// Check if the path is a directory
-		if !info.IsDir() {
-			if jsonErr == nil {
-				errCh <- errors.E(op, errors.Str("Dir is not a directory "+dir+" "+string(jsonCfg)))
-			} else {
-				errCh <- errors.E(op, jsonErr)
-				errCh <- errors.E(op, errors.Str("Dir is not a directory "+dir))
-			}
-			return errCh
-		}
+	validDirs, dirErr := p.validWatchDirs()
+	if dirErr != nil {
+		errCh <- errors.E(op, dirErr)
+		return errCh
 	}
+	p.cfg.Dirs = validDirs
+	p.cfg.Dir = ""
 
 	// Validate Regexp
 	if p.cfg.Regexp != "" {
@@ -126,6 +107,38 @@ func (p *Plugin) Serve() chan error {
 	}
 
 	return errCh
+}
+
+func (p *Plugin) validWatchDirs() ([]string, error) {
+	jsonCfg, jsonErr := json.Marshal(p.cfg)
+	validDirs := make([]string, 0, len(p.cfg.WatchDirs()))
+	for _, dir := range p.cfg.WatchDirs() {
+		info, fileErr := os.Stat(dir)
+		if os.IsNotExist(fileErr) {
+			if jsonErr != nil {
+				p.log.Warn("configured watch directory does not exist", zap.String("dir", dir), zap.Error(jsonErr))
+			} else {
+				p.log.Warn("configured watch directory does not exist", zap.String("dir", dir), zap.ByteString("config", jsonCfg))
+			}
+			continue
+		} else if fileErr != nil {
+			p.log.Warn("configured watch directory cannot be inspected", zap.String("dir", dir), zap.Error(fileErr))
+			continue
+		}
+		if !info.IsDir() {
+			if jsonErr != nil {
+				p.log.Warn("configured watch path is not a directory", zap.String("dir", dir), zap.Error(jsonErr))
+			} else {
+				p.log.Warn("configured watch path is not a directory", zap.String("dir", dir), zap.ByteString("config", jsonCfg))
+			}
+			continue
+		}
+		validDirs = append(validDirs, dir)
+	}
+	if len(validDirs) == 0 {
+		return nil, errors.Str("no configured watch directories exist or are directories")
+	}
+	return validDirs, nil
 }
 
 func (p *Plugin) Name() string {
